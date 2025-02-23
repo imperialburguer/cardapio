@@ -159,6 +159,8 @@ const produtos = [
 
 let ketchupGratuito = 1;
 let maioneseGratuita = 1;
+const maquininhaTax = 4.00; // Valor da taxa de maquininha
+let isCardPayment = false; // Variável para acompanhar se o pagamento é com cartão
 
 function showCatalog() {
     document.getElementById("header").style.display = "none";
@@ -292,6 +294,10 @@ function updateCart(deliveryFee = 0) {
         cartItemsContainer.appendChild(cartItemDiv);
     });
 
+    if (isCardPayment) {
+        total += maquininhaTax; // Adicionar a taxa de maquininha se o pagamento for com cartão
+    }
+
     total += deliveryFee;
     cartTotalContainer.textContent = `Total: R$ ${total.toFixed(2)} (incluindo taxa de entrega: R$ ${deliveryFee.toFixed(2)})`;
     cartCount.textContent = cart.length;
@@ -336,6 +342,36 @@ function removeFromCart(item) {
 function toggleCart() {
     const cartDetails = document.getElementById('cartDetails');
     cartDetails.style.display = cartDetails.style.display === 'block' ? 'none' : 'block';
+}
+
+function checkPaymentOption() {
+    const paymentOption = document.querySelector('input[name="paymentOption"]:checked').value;
+
+    if (paymentOption === 'Cartão') {
+        const agree = confirm(`Será cobrada uma taxa de maquininha de R$ ${maquininhaTax.toFixed(2)}. Você concorda?`);
+        
+        if (agree) {
+            isCardPayment = true; // Definir que o pagamento é com cartão
+            addTaxToTotal(maquininhaTax);
+        } else {
+            isCardPayment = false; // Redefinir a variável se o cliente não concordar
+            // Desmarcar a opção se o cliente não concordar
+            document.querySelector('input[name="paymentOption"]:checked').checked = false;
+        }
+    } else {
+        isCardPayment = false; // Redefinir a variável se o pagamento não for com cartão
+    }
+
+    updateCart(); // Atualizar o carrinho para refletir a mudança
+}
+
+function addTaxToTotal(tax) {
+    const totalElement = document.getElementById('cartTotal'); // Supondo que o total esteja em um elemento com ID 'cartTotal'
+    const totalText = totalElement.textContent;
+    const totalAmountMatch = totalText.match(/Total: R\$ (\d+\.\d+)/);
+    let currentTotal = totalAmountMatch ? parseFloat(totalAmountMatch[1]) : 0;
+    currentTotal += tax;
+    totalElement.textContent = `Total: R$ ${currentTotal.toFixed(2)}`;
 }
 
 function finalizeOrder() {
@@ -433,6 +469,12 @@ function sendOrder() {
     const locationSelect = document.getElementById('locationSelect');
     const location = locationSelect ? locationSelect.value : '';
     const deliveryFee = parseFloat(locationSelect.options[locationSelect.selectedIndex]?.getAttribute('data-fee')) || 0;
+
+    // Adicionar a taxa de maquininha ao total se o pagamento for com cartão
+    if (isCardPayment) {
+        totalAmount = (parseFloat(totalAmount) + maquininhaTax).toFixed(2);
+    }
+
     totalAmount = (parseFloat(totalAmount) + deliveryFee).toFixed(2);
 
     let phoneNumber = '5588993467578';

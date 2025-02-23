@@ -56,21 +56,23 @@
                 <option value="" disabled selected>Selecione sua localização</option>
                 <option value="Barro Vermelho" data-fee="3.00">Barro Vermelho - R$ 3.00</option>
                 <option value="Alquebre" data-fee="5.00">Alquebre - R$ 5.00</option>
+                <option value="Tamundé/Poção" data-fee="5.00">Tamundé/Poção - R$ 5.00</option>
                 <option value="Pé do Morro" data-fee="4.00">Pé do Morro - R$ 4.00</option>
                 <option value="Impuzinho" data-fee="3.00">Impuzinho - R$ 3.00</option>
                 <option value="Chapada dos Ribeiros" data-fee="3.00">Chapada dos Ribeiros - R$ 3.00</option>
                 <option value="Chapada do Papoco" data-fee="4.00">Chapada do Papoco - R$ 4.00</option>
                 <option value="Malhada" data-fee="Grátis">Malhada - Grátis</option>
+                <option value="Combinar entrega" data-fee="Combinar entrega">Combinar entrega </option>
             </select>
         </div>
 
         <div class="payment-option">
             <p>Forma de pagamento:</p>
-            <input type="radio" id="cash" name="paymentOption" value="Dinheiro">
+            <input type="radio" id="cash" name="paymentOption" value="Dinheiro" onchange="checkPaymentOption()">
             <label for="cash">Dinheiro</label>
-            <input type="radio" id="pix" name="paymentOption" value="Pix">
+            <input type="radio" id="pix" name="paymentOption" value="Pix" onchange="checkPaymentOption()">
             <label for="pix">Pix</label>
-            <input type="radio" id="card" name="paymentOption" value="Cartão">
+            <input type="radio" id="card" name="paymentOption" value="Cartão" onchange="checkPaymentOption()">
             <label for="card">Cartão</label>
         </div>
 
@@ -80,7 +82,7 @@
             <button class="confirm-button" onclick="showFinalizeButton()">OK</button>
         </div>
         <div id="finalizeOrderSection" style="display: none;">
-            <button id="finalizeButton" style="margin-top: 10px;" onclick="finalizeOrder()">Finalizar</button> <!-- Ajustar a margem superior -->
+            <button id="finalizeButton" style="margin-top: 10px;" onclick="finalizeOrder()">Finalizar</button>
         </div>
     </div>
 

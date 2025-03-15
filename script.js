@@ -1,327 +1,688 @@
-let currentPage = 1;
-const productsPerPage = 6;
+document.addEventListener('DOMContentLoaded', function () {
+    const statusOperacao = document.getElementById('status-operacao');
+    const statusDot = document.querySelector('.status-dot');
+    const statusText = document.querySelector('.status-text');
+    const agora = new Date();
+    const horaAtual = agora.getHours();
+    const minutoAtual = agora.getMinutes();
+
+    if ((horaAtual > 18 || (horaAtual === 18 && minutoAtual >= 30)) && horaAtual < 22) {
+        statusText.textContent = 'Aberto';
+        statusDot.style.backgroundColor = 'green'; // Verde para aberto
+        statusText.style.color = 'green'; // Texto verde
+    } else {
+        statusText.textContent = 'Fechado';
+        statusDot.style.backgroundColor = 'red'; // Vermelho para fechado
+        statusText.style.color = 'red'; // Texto vermelho
+    }
+});
+
+// Variáveis globais
 let cart = [];
-const avaliacoes = [];
+let isCardPayment = false;
+const maquininhaTax = 4.00;
+const ketchupGratuito = 1;
+const maioneseGratuita = 1;
+let descontoCupom = 0;
+let cupomAplicado = null;
+let freteGratis = false;
+
+// Cupons válidos com regras
+const cuponsValidos = {
+    "ENTREGAGRATIS": {
+        tipo: "frete-gratis",
+        regra: {
+            tipo: "valor-minimo",
+            valor: 35.00,
+            produtos: [1, 2, 3, 4, 5, 6],
+        },
+        validoAte: "2025-03-20",
+        maximoUsos: 60,
+        usos: 0
+    },
+    "IMPERIAL5": {
+        tipo: "desconto",
+        valor: 2,
+        regra: {
+            tipo: "valor-minimo",
+            valor: 30.00,
+            produtos: [3, 4],
+        },
+        validoAte: "2025-03-20",
+        maximoUsos: 50,
+        usos: 0
+    },
+    "DESCONTO5": {
+        tipo: "desconto-total",
+        valor: 5, // 5% de desconto
+        regra: {
+            tipo: "valor-minimo-total",
+            valor: 35.00, // Valor mínimo da compra
+        },
+        validoAte: "2025-03-20",
+        maximoUsos: 50,
+        usos: 0
+    }
+};
+
+// Exemplo de produtos
 const produtos = [
     {
         id: 1,
-        nome: "X-Burguer",
-        preco: 8.00,
-        descricao: "Delicioso hambúrguer com pão, carne e mussarela.",
-        imagem: "imagens/xburguer.png",
-        categoria: "burguer"
+        nome: "Combo X-Burguer",
+        preco: 15.00,
+        descricao: "Hambúrguer suculento com queijo derretido, batata frita crocante e refrigerante 250ml gelado!",
+        imagem: "images/comboxburguer.png",
+        destaque: true
     },
     {
         id: 2,
-        nome: "X-Salada",
-        preco: 9.00,
-        descricao: "Delicioso hambúrguer com pão, carne, mussarela e salada.",
-        imagem: "imagens/xsalada.png",
-        categoria: "burguer"
+        nome: "Combo X-Salada",
+        preco: 16.00,
+        descricao: "Hambúrguer suculento com queijo, alface, tomate e maionese especial, batata frita crocante e refrigerante250ml gelado!",
+        imagem: "images/comboxsalada.png",
+        destaque: true
     },
     {
         id: 3,
-        nome: "X-Frango",
-        preco: 12.00,
-        descricao: "Delicioso hambúrguer com pão, frango empanado e salada, alface e tomate.",
-        imagem: "imagens/xfrango.png",
-        categoria: "burguer"
+        nome: "Combo X-Tudo",
+        preco: 23.00,
+        descricao: "Hambúrguer suculento com queijo, presunto, bacon, ovo, alface, tomate e maionese especial, batata frita crocante e refrigerante 250ml gelado!",
+        imagem: "images/comboxtudo.png",
+        destaque: true // Produto em destaque
     },
     {
         id: 4,
-        nome: "X-Bacon",
-        preco: 12.00,
-        descricao: "Delicioso hambúrguer com pão, carne, bacon, mussarela e salada, alface e tomate.",
-        imagem: "imagens/xbacon.png",
-        categoria: "burguer"
+        nome: "Combo X-Bacon",
+        preco: 20.00,
+        descricao: "Hambúrguer suculento com queijo derretido e muito bacon crocante, batata frita e refrigerante 250ml gelado!",
+        imagem: "images/comboxbacon.png",
+        destaque: true // Produto em destaque
     },
     {
         id: 5,
-        nome: "X-Tudo",
-        preco: 15.00,
-        descricao: "Delicioso hambúrguer com pão, carne, presunto, bacon, milho, batata palha, ovo e salada, alface e tomate.",
-        imagem: "imagens/xtudo.png",
-        categoria: "burguer"
+        nome: "Combo Duplo Burguer",
+        preco: 22.00,
+        descricao: "Hambúrguer suculento com queijo derretido e muito sabor, batata frita crocante e refrigerante 250ml gelado!",
+        imagem: "images/comboduploburguer.png",
+        destaque: true // Produto em destaque
     },
     {
         id: 6,
-        nome: "Duplo Burguer",
-        preco: 14.00,
-        descricao: "Um delicioso hambúrguer clássico, com pão, duas carnes, duas mussarela e salada, alface e tomate.",
-        imagem: "imagens/duploburguer.png",
-        categoria: "Duplos"
+        nome: "Combo Imperial",
+        preco: 31.00,
+        descricao: "Uma experiência digna de rei, com batata frita crocante e refrigerante 250ml gelado!",
+        imagem: "images/comboimperial.png",
+        destaque: true // Produto em destaque
     },
+    // Outros produtos...
     {
         id: 7,
-        nome: "Duplo Cheddar",
-        preco: 17.00,
-        descricao: "Um delicioso hambúrguer clássico, com pão, duas carnes, dois cheddar, bacon e salada, alface e tomate.",
-        imagem: "imagens/duplocheddar.png",
-        categoria: "Duplos"
+        nome: "X-Burguer",
+        preco: 8.00,
+        descricao: "Delicioso hambúrguer com pão, carne e mussarela!",
+        imagem: "images/xburguer.png",
+        categoria: "Hambúrgueres",
+        subcategoria: "X",
     },
     {
         id: 8,
-        nome: "Especial Imperial",
-        preco: 23.00,
-        descricao: "Um deliciso hambúrguer especial, com pão, três carnes, três queijos, cheddar, bacon, ovo, batata palha, cebola e salada, alface e tomate.",
-        imagem: "imagens/especialimperial.png",
-        categoria: "Duplos"
+        nome: "X-Salada",
+        preco: 9.00,
+        descricao: "Delicioso hambúrguer com pão, carne, mussarela e salada!",
+        imagem: "images/xsalada.png",
+        categoria: "Hambúrgueres",
+        subcategoria: "X",
     },
     {
         id: 9,
-        nome: "Batata Frita P",
-        preco: 7.00,
-        descricao: "Deliciosa batata frita tamanho P, crocante e macia (serve 1 pessoa)",
-        imagem: "imagens/batatap.png",
-        categoria: "Porções"
+        nome: "X-Frango",
+        preco: 12.00,
+        descricao: "Delicioso hambúrguer com pão, frango empanado e salada, alface e tomate!",
+        imagem: "images/xfrango.png",
+        categoria: "Hambúrgueres",
+        subcategoria: "X",
     },
     {
         id: 10,
-        nome: "Batata Frita G",
-        preco: 9.00,
-        descricao: "Deliciosa batata frita tamanho G, crocante e macia (serve até duas pessoas)",
-        imagem: "imagens/batatag.png",
-        categoria: "Porções"
+        nome: "X-Bacon",
+        preco: 12.00,
+        descricao: "Delicioso hambúrguer com pão, carne, bacon, mussarela e salada, alface e tomate!",
+        imagem: "images/xbacon.png",
+        categoria: "Hambúrgueres",
+        subcategoria: "X",
     },
     {
         id: 11,
-        nome: "Batata Frita Para Compartilhar",
-        preco: 12.00,
-        descricao: "Deliciosa batata frita para compartilhar com a galera, acompanha ketchup e molho de maionese. (serve até 4 pessoas)",
-        imagem: "imagens/batatagg.png",
-        categoria: "Porções"
+        nome: "X-Tudo",
+        preco: 15.00,
+        descricao: "Delicioso hambúrguer com pão, carne, presunto, bacon, milho, batata palha, ovo e salada, alface e tomate!",
+        imagem: "images/xtudo.png",
+        categoria: "Hambúrgueres",
+        subcategoria: "X",
     },
     {
         id: 12,
-        nome: "Linguiça Imperial",
-        preco: 15.00,
-        descricao: "Deliciosa linguiça calabresa com cebola!",
-        imagem: "imagens/linguica.png",
-        categoria: "Porções"
+        nome: "Duplo Burguer",
+        preco: 14.00,
+        descricao: "Um delicioso hambúrguer clássico, com pão, duas carnes, duas mussarela e salada, alface e tomate!",
+        imagem: "images/duploburguer.png",
+        categoria: "Hambúrgueres",
+        subcategoria: "Duplos",
     },
     {
         id: 13,
-        nome: "Ketchup",
-        preco: 1.00,
-        descricao: "Molho de ketchup. O primeiro é grátis!",
-        imagem: "imagens/ketchup.png",
-        categoria: "molhos"
+        nome: "Duplo Cheddar",
+        preco: 17.00,
+        descricao: "Um delicioso hambúrguer clássico, com pão, duas carnes, dois cheddar, bacon e salada, alface e tomate!",
+        imagem: "images/duplocheddar.png",
+        categoria: "Hambúrgueres",
+        subcategoria: "Duplos",
     },
     {
         id: 14,
-        nome: "Maionese",
-        preco: 1.00,
-        descricao: "Molho de maionese. O primeiro é grátis!",
-        imagem: "imagens/maionese.png",
-        categoria: "molhos"
+        nome: "Especial Imperial",
+        preco: 23.00,
+        descricao: "Um deliciso hambúrguer especial, com pão, três carnes, três queijos, cheddar, bacon, ovo, batata palha, cebola e salada, alface e tomate!",
+        imagem: "images/especialimperial.png",
+        categoria: "Hambúrgueres",
+        subcategoria: "Especial",
     },
     {
         id: 15,
-        nome: "Molho Especial",
-        preco: 2.00,
-        descricao: "Molho de maionese temperada.",
-        imagem: "imagens/molhoespecial.png",
-        categoria: "molhos"
+        nome: "Batata Frita P",
+        preco: 7.00,
+        descricao: "Deliciosa batata frita tamanho P, crocante e macia!",
+        imagem: "images/batatap.png",
+        categoria: "Porções"
     },
     {
         id: 16,
-        nome: "Refrigerante Laranja 250ml",
-        preco: 3.00,
-        descricao: "Geladinho para refrescar e acompanhar o seu lanche.",
-        imagem: "imagens/laranja250ml.png",
-        categoria: "Bebidas"
+        nome: "Batata Frita G",
+        preco: 9.00,
+        descricao: "Deliciosa batata frita tamanho G, crocante e macia!",
+        imagem: "images/batatag.png",
+        categoria: "Porções"
     },
     {
         id: 17,
-        nome: "Refrigerante Uva 250ml",
-        preco: 3.00,
-        descricao: "Geladinho para refrescar e acompanhar o seu lanche.",
-        imagem: "imagens/uva250ml.png",
-        categoria: "Bebidas"
+        nome: "Batata Frita Imperial",
+        preco: 15.00,
+        descricao: "Deliciosa batata frita para se deliciar, com cheddar, catupiry e bacon!",
+        imagem: "images/batataimperial.png",
+        categoria: "Porções"
     },
     {
         id: 18,
-        nome: "Refrigerante Guaraná 250ml",
-        preco: 3.00,
-        descricao: "Geladinho para refrescar e acompanhar o seu lanche.",
-        imagem: "imagens/guarana250ml.png",
-        categoria: "Bebidas"
+        nome: "Linguiça Imperial",
+        preco: 20.00,
+        descricao: "Deliciosa linguiça calabresa com cebola!",
+        imagem: "images/linguica.png",
+        categoria: "Porções"
     },
     {
         id: 19,
-        nome: "Refrigerante Jeri Cola 250ml",
+        nome: "Ketchup",
+        preco: 1.00,
+        descricao: "Molho de ketchup. O primeiro é grátis!",
+        imagem: "images/ketchup.png",
+        categoria: "molhos"
+    },
+    {
+        id: 20,
+        nome: "Maionese",
+        preco: 1.00,
+        descricao: "Molho de maionese. O primeiro é grátis!",
+        imagem: "images/maionese.png",
+        categoria: "molhos"
+    },
+    {
+        id: 21,
+        nome: "Molho Especial",
+        preco: 2.00,
+        descricao: "Molho de maionese temperada!",
+        imagem: "images/molhoespecial.png",
+        categoria: "molhos"
+    },
+    {
+        id: 22,
+        nome: "Refrigerante Laranja 250ml",
         preco: 3.00,
-        descricao: "Geladinho para refrescar e acompanhar o seu lanche.",
-        imagem: "imagens/jeri250ml.png",
+        descricao: "Geladinho para refrescar e acompanhar o seu lanche!",
+        imagem: "images/laranja250ml.png",
         categoria: "Bebidas"
     },
+    {
+        id: 23,
+        nome: "Refrigerante Uva 250ml",
+        preco: 3.00,
+        descricao: "Geladinho para refrescar e acompanhar o seu lanche!",
+        imagem: "images/uva250ml.png",
+        categoria: "Bebidas"
+    },
+    {
+        id: 24,
+        nome: "Refrigerante Guaraná 250ml",
+        preco: 3.00,
+        descricao: "Geladinho para refrescar e acompanhar o seu lanche!",
+        imagem: "images/guarana250ml.png",
+        categoria: "Bebidas"
+    },
+    {
+        id: 25,
+        nome: "Refrigerante Jeri Cola 250ml",
+        preco: 3.00,
+        descricao: "Geladinho para refrescar e acompanhar o seu lanche!",
+        imagem: "images/jeri250ml.png",
+        categoria: "Hambúrgueres",
+        subcategoria: "Combos"
+    }
 ];
 
-let ketchupGratuito = 1;
-let maioneseGratuita = 1;
-const maquininhaTax = 4.00; // Valor da taxa de maquininha
-let isCardPayment = false; // Variável para acompanhar se o pagamento é com cartão
-
-function showCatalog() {
-    document.getElementById("header").style.display = "none";
-    document.getElementById("mainFooter").style.display = "block";
-    document.body.style.overflow = "auto";
-    document.getElementById("categorias").style.display = "block";
-    document.getElementById("catalogo").style.display = "block";
-    document.getElementById("cartIcon").style.display = "block";
-    filterProducts('burguer');
+// Função para exibir a página inicial (Menu, Carrossel e Destaques)
+function showInicio() {
+    document.getElementById('header').style.display = 'none';
+    document.getElementById('inicio').style.display = 'block';
+    document.getElementById('categorias').style.display = 'flex';
+    document.getElementById('carrossel').style.display = 'block';
+    document.getElementById('destaque').style.display = 'block';
+    document.getElementById('catalogo').style.display = 'none';
+    document.getElementById('cartIcon').style.display = 'block'; // Mostra o ícone do carrinho
+    document.getElementById('mainFooter').style.display = 'block';
+    document.getElementById('cartDetails').style.display = 'none';
+    loadDestaqueProducts(); // Carrega os produtos em destaque
 }
 
-function filterProducts(categoria) {
-    const filteredProducts = produtos.filter(produto => produto.categoria.toLowerCase() === categoria.toLowerCase());
-    renderFilteredPage(filteredProducts);
-}
+// Função para carregar os produtos em destaque
+function loadDestaqueProducts() {
+    const produtosDestaqueContainer = document.getElementById('produtos-destaque');
+    produtosDestaqueContainer.innerHTML = '';
 
-function renderFilteredPage(products) {
-    const container = document.getElementById("produtos");
-    container.innerHTML = '';
-    if (products.length === 0) {
-        container.innerHTML = '<p>Nenhum produto encontrado.</p>';
-    } else {
-        products.forEach(produto => {
-            const productDiv = document.createElement('div');
-            productDiv.classList.add('produto');
-
-            const productImage = document.createElement('img');
-            productImage.src = produto.imagem;
-            productDiv.appendChild(productImage);
-
-            const productName = document.createElement('h3');
-            productName.textContent = produto.nome;
-            productDiv.appendChild(productName);
-
-            const productPrice = document.createElement('p');
-            productPrice.innerHTML = `<strong> R$ ${produto.preco.toFixed(2)}</strong>`;
-            productDiv.appendChild(productPrice);
-
-            const productDescription = document.createElement('p');
-            productDescription.textContent = produto.descricao;
-            productDiv.appendChild(productDescription);
-
-            const addToCartButton = document.createElement('button');
-            addToCartButton.textContent = `Pedir Agora (${produto.quantity || 0})`;
-            addToCartButton.onclick = () => addToCart(produto);
-            productDiv.appendChild(addToCartButton);
-
-            container.appendChild(productDiv);
-        });
-    }
-}
-
-function addToCart(produto) {
-    const existingItem = cart.find(item => item.id === produto.id);
-
-    if (existingItem) {
-        existingItem.quantity += 1;
-    } else {
-        cart.push({ ...produto, quantity: 1 });
-    }
-
-    updateProductQuantity(produto.id);
-    updateCart();
-}
-
-function updateProductQuantity(productId) {
-    const products = document.querySelectorAll('.produto');
-    products.forEach(productDiv => {
-        const addToCartButton = productDiv.querySelector('button');
-        const productName = productDiv.querySelector('h3').textContent;
-        const product = produtos.find(p => p.nome === productName);
-        if (product && product.id === productId) {
-            addToCartButton.textContent = `Pedir Agora (${cart.find(item => item.id === productId)?.quantity || 0})`;
+    produtos.forEach(produto => {
+        if (produto.destaque) {
+            const produtoDiv = document.createElement('div');
+            produtoDiv.classList.add('produto');
+            produtoDiv.innerHTML = `
+                <img src="${produto.imagem}" alt="${produto.nome}">
+                <h3>${produto.nome}</h3>
+                <p>${produto.descricao}</p>
+                <p>R$ ${produto.preco.toFixed(2)}</p>
+                <button onclick="adicionarAoCarrinho(${produto.id})">Pedir agora</button>
+            `;
+            produtosDestaqueContainer.appendChild(produtoDiv);
         }
     });
 }
 
+// Função para filtrar produtos por categoria
+function filterProducts(categoria, subcategoria = null) {
+    document.getElementById('carrossel').style.display = 'none';
+    document.getElementById('destaque').style.display = 'none';
+    document.getElementById('catalogo').style.display = 'block';
+
+    const produtosContainer = document.getElementById('produtos');
+    produtosContainer.innerHTML = '';
+
+    produtos.forEach(produto => {
+        if (produto.categoria === categoria && (!subcategoria || produto.subcategoria === subcategoria)) {
+            const produtoDiv = document.createElement('div');
+            produtoDiv.classList.add('produto');
+            produtoDiv.innerHTML = `
+                <img src="${produto.imagem}" alt="${produto.nome}">
+                <h3>${produto.nome}</h3>
+                <p>${produto.descricao}</p>
+                <p>R$ ${produto.preco.toFixed(2)}</p>
+                <button onclick="adicionarAoCarrinho(${produto.id})">Pedir agora</button>
+            `;
+            produtosContainer.appendChild(produtoDiv);
+        }
+    });
+}
+
+// Função para adicionar um produto ao carrinho
+function adicionarAoCarrinho(id) {
+    const produto = produtos.find(p => p.id === id);
+    const itemExistente = cart.find(p => p.id === id);
+    if (itemExistente) {
+        itemExistente.quantity += 1;
+    } else {
+        const novoItem = { ...produto, quantity: 1 };
+        cart.push(novoItem);
+    }
+    updateCart();
+}
+
+// Função para exibir/ocultar o campo de cupom
+function toggleCupomInput() {
+    const cupomInputContainer = document.getElementById('cupomInputContainer');
+    const toggleCupomButton = document.getElementById('toggleCupomButton');
+    const arrow = toggleCupomButton.querySelector('.arrow');
+    if (cupomInputContainer.style.display === 'none' || cupomInputContainer.style.display === '') {
+        cupomInputContainer.style.display = 'flex';
+        arrow.classList.add('rotate');
+    } else {
+        cupomInputContainer.style.display = 'none';
+        arrow.classList.remove('rotate');
+    }
+}
+
+// Função para aplicar o cupom
+function aplicarCupom() {
+    const cupomInput = document.getElementById('cupomInput').value.trim();
+    const cupom = cuponsValidos[cupomInput];
+    const dataAtual = new Date();
+
+    if (!cupom) {
+        alert("Cupom inválido!");
+        return;
+    }
+
+    // Verifica a validade do cupom
+    const dataValidade = new Date(cupom.validoAte);
+    if (dataAtual > dataValidade) {
+        alert("Cupom expirado!");
+        return;
+    }
+
+    // Verifica o número de usos do cupom
+    if (cupom.usos >= cupom.maximoUsos) {
+        alert("Número máximo de usos do cupom atingido!");
+        return;
+    }
+
+    // Verifica o tipo de cupom
+    if (cupom.tipo === "desconto-total") {
+        const valorMinimo = cupom.regra.valor;
+        const totalCompra = calcularTotal();
+
+        if (totalCompra < valorMinimo) {
+            alert(`Cupom válido apenas para compras acima de R$ ${valorMinimo.toFixed(2)}.`);
+            return;
+        }
+
+        // Aplica o desconto no valor total da compra
+        descontoCupom = cupom.valor; // Armazena o desconto do cupom
+        cupomAplicado = cupomInput; // Armazena o cupom aplicado
+        alert(`Cupom aplicado com sucesso! Desconto de ${cupom.valor}% no valor total da compra.`);
+    } else if (cupom.tipo === "desconto") {
+        const produtosValidos = cupom.regra.produtos;
+        const itemParticipante = cart.find(item => produtosValidos.includes(item.id));
+
+        if (!itemParticipante) {
+            alert("Cupom válido apenas para produtos específicos. Adicione um produto participante!");
+            return;
+        }
+
+        // Aplica o desconto apenas ao primeiro item participante
+        const desconto = itemParticipante.preco * (cupom.valor / 100);
+        itemParticipante.desconto = desconto; // Armazena o desconto no item
+        cupomAplicado = cupomInput; // Armazena o cupom aplicado
+        alert(`Cupom aplicado com sucesso! Desconto de ${cupom.valor}% no item "${itemParticipante.nome}".`);
+    } else if (cupom.tipo === "frete-gratis") {
+        freteGratis = true; // Ativa o frete grátis
+        cupomAplicado = cupomInput; // Armazena o cupom aplicado
+        alert("Cupom aplicado com sucesso! Frete grátis ativado.");
+    }
+
+    // Atualiza a exibição do cupom aplicado
+    document.getElementById('toggleCupomButton').style.display = 'none';
+    document.getElementById('cupomAplicadoContainer').style.display = 'flex';
+    document.getElementById('cupomAplicadoText').textContent = cupomInput;
+
+    // Atualiza o número de usos do cupom
+    cuponsValidos[cupomInput].usos += 1;
+
+    // Atualiza o carrinho
+    updateCart();
+}
+
+// Função para remover o cupom
+function removerCupom() {
+    // Remove o desconto do item específico
+    cart.forEach(item => {
+        if (item.desconto) {
+            delete item.desconto;
+        }
+    });
+
+    descontoCupom = 0;
+    freteGratis = false;
+    cupomAplicado = null;
+    document.getElementById('cupomInput').value = '';
+    document.getElementById('cupomAplicadoContainer').style.display = 'none';
+    document.getElementById('toggleCupomButton').style.display = 'block';
+    updateCart();
+}
+
+// Função para calcular o total do carrinho
 function updateCart(deliveryFee = 0) {
     const cartItemsContainer = document.getElementById('cartItems');
     const cartTotalContainer = document.getElementById('cartTotal');
     const cartCount = document.getElementById('cartCount');
-    cartItemsContainer.innerHTML = '';
-    let total = 0;
+    cartItemsContainer.innerHTML = ''; // Limpa o conteúdo atual do carrinho
+    let total = calcularTotal(); // Calcula o total com o desconto aplicado
 
+    // Itera sobre cada item no carrinho
     cart.forEach(item => {
         const price = item.preco;
         const cartItemDiv = document.createElement('div');
         cartItemDiv.classList.add('cart-item');
 
+        // Nome e preço do item
         const itemName = document.createElement('p');
+        let itemTotal = 0;
+
+        // Verifica se o item é ketchup ou maionese
         if (item.nome === 'Ketchup' || item.nome === 'Maionese') {
-            if (item.nome === 'Ketchup' && item.quantity <= ketchupGratuito) {
-                itemName.textContent = `${item.nome} - Gratuito (${item.quantity}x)`;
-            } else if (item.nome === 'Maionese' && item.quantity <= maioneseGratuita) {
+            const quantidadeGratuita = 1; // Primeira unidade gratuita
+            const quantidadePaga = Math.max(item.quantity - quantidadeGratuita, 0); // Unidades pagas
+            itemTotal = price * quantidadePaga; // Calcula o total pago
+
+            if (item.quantity <= quantidadeGratuita) {
                 itemName.textContent = `${item.nome} - Gratuito (${item.quantity}x)`;
             } else {
-                const extraQuantity = item.quantity - (item.nome === 'Ketchup' ? ketchupGratuito : maioneseGratuita);
-                itemName.textContent = `${item.nome} - R$ ${(price * extraQuantity).toFixed(2)} (${item.quantity}x)`;
-                total += price * extraQuantity;
+                itemName.textContent = `${item.nome} - R$ ${itemTotal.toFixed(2).replace('.', ',')} (${item.quantity}x)`;
             }
         } else {
-            itemName.textContent = `${item.nome} - R$ ${(price * item.quantity).toFixed(2)} (${item.quantity}x)`;
-            total += price * item.quantity;
+            // Para outros produtos, cobra normalmente
+            itemTotal = price * item.quantity;
+            if (item.desconto) {
+                itemTotal -= item.desconto; // Aplica o desconto do cupom
+                itemName.textContent = `${item.nome} - R$ ${itemTotal.toFixed(2).replace('.', ',')} (${item.quantity}x) - Desconto de R$ ${item.desconto.toFixed(2).replace('.', ',')} aplicado`;
+            } else {
+                itemName.textContent = `${item.nome} - R$ ${itemTotal.toFixed(2).replace('.', ',')} (${item.quantity}x)`;
+            }
         }
+
         cartItemDiv.appendChild(itemName);
 
+        // Botões de ajuste de quantidade
         const adjustButtons = document.createElement('div');
         adjustButtons.classList.add('adjust-buttons');
 
+        // Botão para diminuir a quantidade
         const decreaseButton = document.createElement('span');
         decreaseButton.textContent = '-';
         decreaseButton.onclick = () => updateItemQuantity(item, item.quantity - 1);
         adjustButtons.appendChild(decreaseButton);
 
+        // Exibe a quantidade atual
         const quantityDisplay = document.createElement('span');
         quantityDisplay.textContent = item.quantity;
         adjustButtons.appendChild(quantityDisplay);
 
+        // Botão para aumentar a quantidade
         const increaseButton = document.createElement('span');
         increaseButton.textContent = '+';
         increaseButton.onclick = () => updateItemQuantity(item, item.quantity + 1);
         adjustButtons.appendChild(increaseButton);
+
         cartItemDiv.appendChild(adjustButtons);
 
+        // Botão para remover o item do carrinho
         const removeButton = document.createElement('span');
         removeButton.textContent = '🗑️';
         removeButton.classList.add('remove-item');
         removeButton.onclick = () => removeFromCart(item);
         cartItemDiv.appendChild(removeButton);
 
+        // Adiciona o item ao contêiner do carrinho
         cartItemsContainer.appendChild(cartItemDiv);
     });
 
-    if (isCardPayment) {
-        total += maquininhaTax; // Adicionar a taxa de maquininha se o pagamento for com cartão
+    // Aplica o frete grátis, se houver
+    if (freteGratis) {
+        deliveryFee = 0; // Zera a taxa de entrega
     }
 
-    total += deliveryFee;
-    cartTotalContainer.textContent = `Total: R$ ${total.toFixed(2)} (incluindo taxa de entrega: R$ ${deliveryFee.toFixed(2)})`;
+    // Adiciona a taxa de maquininha se o pagamento for com cartão
+    if (isCardPayment) {
+        total += maquininhaTax;
+    }
+
+    // Adiciona a taxa de entrega ao total, exceto se o cupom for FRETEGRATIS
+    if (!freteGratis) {
+        total += deliveryFee;
+    }
+
+    // Atualiza o total exibido no carrinho
+    cartTotalContainer.textContent = `Total: R$ ${total.toFixed(2).replace('.', ',')} (incluindo taxa de entrega: R$ ${deliveryFee.toFixed(2).replace('.', ',')})`;
+
+    // Atualiza o contador de itens no ícone do carrinho
     cartCount.textContent = cart.length;
 }
 
-function handleDeliveryOptionChange(option) {
-    const locationOption = document.getElementById('locationOption');
-    const customerNameInput = document.getElementById('customerName');
-    if (option === 'Delivery') {
-        locationOption.style.display = 'block';
-    } else {
-        locationOption.style.display = 'none';
-        updateDeliveryFee(0);
+// Função para calcular o total da compra
+function calcularTotal() {
+    let total = 0;
+
+    cart.forEach(item => {
+        const price = item.preco;
+        let itemTotal = 0;
+
+        // Verifica se o item é ketchup ou maionese
+        if (item.nome === 'Ketchup' || item.nome === 'Maionese') {
+            const quantidadeGratuita = 1; // Primeira unidade gratuita
+            const quantidadePaga = Math.max(item.quantity - quantidadeGratuita, 0); // Unidades pagas
+            itemTotal = price * quantidadePaga; // Calcula o total pago
+        } else {
+            // Para outros produtos, cobra normalmente
+            itemTotal = price * item.quantity;
+            if (item.desconto) {
+                itemTotal -= item.desconto; // Aplica o desconto do cupom
+            }
+        }
+
+        total += itemTotal;
+    });
+
+    // Aplica o desconto percentual do cupom, se houver
+    if (descontoCupom > 0) {
+        total *= (1 - descontoCupom / 100);
     }
-    customerNameInput.style.display = 'block';
+
+    return total;
 }
 
-function updateDeliveryFee() {
-    const locationSelect = document.getElementById('locationSelect');
-    const selectedOption = locationSelect.options[locationSelect.selectedIndex];
-    const deliveryFee = parseFloat(selectedOption.getAttribute('data-fee')) || 0;
-    updateCart(deliveryFee);
+// Função para atualizar o carrinho
+function updateCart(deliveryFee = 0) {
+    const cartItemsContainer = document.getElementById('cartItems');
+    const cartTotalContainer = document.getElementById('cartTotal');
+    const cartCount = document.getElementById('cartCount');
+    cartItemsContainer.innerHTML = ''; // Limpa o conteúdo atual do carrinho
+    let total = calcularTotal(); // Calcula o total com o desconto aplicado
+
+    // Itera sobre cada item no carrinho
+    cart.forEach(item => {
+        const price = item.preco;
+        const cartItemDiv = document.createElement('div');
+        cartItemDiv.classList.add('cart-item');
+
+        // Nome e preço do item
+        const itemName = document.createElement('p');
+        let itemTotal = 0;
+
+        // Verifica se o item é ketchup ou maionese
+        if (item.nome === 'Ketchup' || item.nome === 'Maionese') {
+            const quantidadeGratuita = 1; // Primeira unidade gratuita
+            const quantidadePaga = Math.max(item.quantity - quantidadeGratuita, 0); // Unidades pagas
+            itemTotal = price * quantidadePaga; // Calcula o total pago
+
+            if (item.quantity <= quantidadeGratuita) {
+                itemName.textContent = `${item.nome} - Gratuito (${item.quantity}x)`;
+            } else {
+                itemName.textContent = `${item.nome} - R$ ${itemTotal.toFixed(2).replace('.', ',')} (${item.quantity}x)`;
+            }
+        } else {
+            // Para outros produtos, cobra normalmente
+            itemTotal = price * item.quantity;
+            if (item.desconto) {
+                itemTotal -= item.desconto; // Aplica o desconto do cupom
+                itemName.textContent = `${item.nome} - R$ ${itemTotal.toFixed(2).replace('.', ',')} (${item.quantity}x) - Desconto de R$ ${item.desconto.toFixed(2).replace('.', ',')} aplicado`;
+            } else {
+                itemName.textContent = `${item.nome} - R$ ${itemTotal.toFixed(2).replace('.', ',')} (${item.quantity}x)`;
+            }
+        }
+
+        cartItemDiv.appendChild(itemName);
+
+        // Botões de ajuste de quantidade
+        const adjustButtons = document.createElement('div');
+        adjustButtons.classList.add('adjust-buttons');
+
+        // Botão para diminuir a quantidade
+        const decreaseButton = document.createElement('span');
+        decreaseButton.textContent = '-';
+        decreaseButton.onclick = () => updateItemQuantity(item, item.quantity - 1);
+        adjustButtons.appendChild(decreaseButton);
+
+        // Exibe a quantidade atual
+        const quantityDisplay = document.createElement('span');
+        quantityDisplay.textContent = item.quantity;
+        adjustButtons.appendChild(quantityDisplay);
+
+        // Botão para aumentar a quantidade
+        const increaseButton = document.createElement('span');
+        increaseButton.textContent = '+';
+        increaseButton.onclick = () => updateItemQuantity(item, item.quantity + 1);
+        adjustButtons.appendChild(increaseButton);
+
+        cartItemDiv.appendChild(adjustButtons);
+
+        // Botão para remover o item do carrinho
+        const removeButton = document.createElement('span');
+        removeButton.textContent = '🗑️';
+        removeButton.classList.add('remove-item');
+        removeButton.onclick = () => removeFromCart(item);
+        cartItemDiv.appendChild(removeButton);
+
+        // Adiciona o item ao contêiner do carrinho
+        cartItemsContainer.appendChild(cartItemDiv);
+    });
+
+    // Aplica o frete grátis, se houver
+    if (freteGratis) {
+        deliveryFee = 0; // Zera a taxa de entrega
+    }
+
+    // Adiciona a taxa de maquininha se o pagamento for com cartão
+    if (isCardPayment) {
+        total += maquininhaTax;
+    }
+
+    // Adiciona a taxa de entrega ao total, exceto se o cupom for FRETEGRATIS
+    if (!freteGratis) {
+        total += deliveryFee;
+    }
+
+    // Atualiza o total exibido no carrinho
+    cartTotalContainer.textContent = `Total: R$ ${total.toFixed(2).replace('.', ',')} (incluindo taxa de entrega: R$ ${deliveryFee.toFixed(2).replace('.', ',')})`;
+
+    // Atualiza o contador de itens no ícone do carrinho
+    cartCount.textContent = cart.length;
 }
 
+// Função para atualizar a quantidade de um item no carrinho
 function updateItemQuantity(item, newQuantity) {
     if (newQuantity <= 0) {
         removeFromCart(item);
@@ -331,6 +692,7 @@ function updateItemQuantity(item, newQuantity) {
     }
 }
 
+// Função para remover um item do carrinho
 function removeFromCart(item) {
     const index = cart.findIndex(cartItem => cartItem.id === item.id);
     if (index > -1) {
@@ -339,11 +701,38 @@ function removeFromCart(item) {
     }
 }
 
+// Função para alternar a exibição do carrinho
 function toggleCart() {
     const cartDetails = document.getElementById('cartDetails');
     cartDetails.style.display = cartDetails.style.display === 'block' ? 'none' : 'block';
 }
 
+// Função para lidar com a mudança na opção de entrega
+function handleDeliveryOptionChange(option) {
+    const locationOption = document.getElementById('locationOption');
+    const locationSelect = document.getElementById('locationSelect');
+    const customerNameInput = document.getElementById('customerName');
+
+    if (option === 'Delivery') {
+        locationOption.style.display = 'block';
+    } else {
+        locationOption.style.display = 'none';
+        locationSelect.value = ''; // Reseta a seleção de localização
+        updateCart(); // Atualiza o carrinho para remover a taxa de entrega
+    }
+
+    customerNameInput.style.display = 'block';
+}
+
+// Função para atualizar a taxa de entrega
+function updateDeliveryFee() {
+    const locationSelect = document.getElementById('locationSelect');
+    const selectedOption = locationSelect.options[locationSelect.selectedIndex];
+    const deliveryFee = parseFloat(selectedOption.getAttribute('data-fee')) || 0;
+    updateCart(deliveryFee);
+}
+
+// Função para verificar a opção de pagamento
 function checkPaymentOption() {
     const paymentOption = document.querySelector('input[name="paymentOption"]:checked').value;
 
@@ -352,10 +741,9 @@ function checkPaymentOption() {
         
         if (agree) {
             isCardPayment = true; // Definir que o pagamento é com cartão
-            addTaxToTotal(maquininhaTax);
+            updateCart();
         } else {
             isCardPayment = false; // Redefinir a variável se o cliente não concordar
-            // Desmarcar a opção se o cliente não concordar
             document.querySelector('input[name="paymentOption"]:checked').checked = false;
         }
     } else {
@@ -365,18 +753,21 @@ function checkPaymentOption() {
     updateCart(); // Atualizar o carrinho para refletir a mudança
 }
 
-function addTaxToTotal(tax) {
-    const totalElement = document.getElementById('cartTotal'); // Supondo que o total esteja em um elemento com ID 'cartTotal'
-    const totalText = totalElement.textContent;
-    const totalAmountMatch = totalText.match(/Total: R\$ (\d+\.\d+)/);
-    let currentTotal = totalAmountMatch ? parseFloat(totalAmountMatch[1]) : 0;
-    currentTotal += tax;
-    totalElement.textContent = `Total: R$ ${currentTotal.toFixed(2)}`;
-}
-
+// Função para finalizar o pedido
 function finalizeOrder() {
     if (cart.length === 0) {
         alert("Por favor, adicione pelo menos um produto ao carrinho.");
+        return;
+    }
+
+    // Verifica se há apenas itens gratuitos no carrinho
+    const apenasItensGratuitos = cart.every(item => {
+        return (item.nome === 'Ketchup' && item.quantity <= ketchupGratuito) ||
+        (item.nome === 'Maionese' && item.quantity <= maioneseGratuita);
+    });
+
+    if (apenasItensGratuitos) {
+        alert("Adicione pelo menos um item válido ao carrinho para finalizar o pedido.");
         return;
     }
 
@@ -398,109 +789,177 @@ function finalizeOrder() {
         return;
     }
 
-    // Exibir tela de confirmação com mensagem personalizada e botão "Enviar Pedido"
+    // Exibir tela de confirmação
     document.getElementById('orderConfirmation').style.display = 'block';
-    document.getElementById('orderConfirmation').innerHTML = `
-        <h1>Pedido Finalizado!</h1>
-        <p>"Seu pedido já está a caminho da cozinha!" 🍔</p>
-        <p>Vamos prepará-lo com carinho, e em cerca de 30 a 40 minutos ele estará prontinho para você. Enquanto isso, que tal nos acompanhar nas redes sociais?</p>
-        <div class="social-icons">
-            <a href="https://www.instagram.com/_imperial.burguer" target="_blank">
-                <i class="fab fa-instagram instagram-icon"></i>
-            </a>
-            <a href="https://wa.me/5588993467578" target="_blank">
-                <i class="fab fa-whatsapp whatsapp-icon"></i>
-            </a>
-        </div>
-        <button onclick="sendOrderAndReturnToCatalog()">Enviar Pedido</button>
-        <p class="credit">© 2025 Desenvolvido por Ismael Rocha | @_ismaelrocha</p>
-    `;
 }
 
+// Função para enviar o pedido e retornar ao catálogo
 function sendOrderAndReturnToCatalog() {
-    sendOrder();
+    sendOrder(); // Envia o pedido via WhatsApp
 
-    // Retornar o catálogo à capa no navegador
-    document.getElementById('header').style.display = 'block';
-    document.getElementById('categorias').style.display = 'none';
-    document.getElementById('catalogo').style.display = 'none';
-    document.getElementById('cartIcon').style.display = 'none';
-    document.getElementById('mainFooter').style.display = 'none';
-    document.getElementById('orderConfirmation').style.display = 'none'; // Ocultar a tela de confirmação
-    document.getElementById('cartDetails').style.display = 'none'; // Ocultar o carrinho
+    // Fecha o carrinho
+    document.getElementById('cartDetails').style.display = 'none';
 
-    cart = []; // Esvaziar o carrinho após a finalização do pedido
-    updateCart(); // Atualizar o carrinho na interface
+    // Esvazia o carrinho
+    cart = [];
+    updateCart();
+
+    // Zera os dados do cliente, cupom, entrega e pagamento
+    document.getElementById('nameInput').value = '';
+    document.getElementById('cupomInput').value = '';
+    removerCupom();
+
+    // Limpa a observação
+    document.getElementById('orderNotes').value = ''; // Limpa o campo de observação
+
+    // Reseta as opções de entrega e pagamento
+    document.querySelector('input[name="deliveryOption"][value="Delivery"]').checked = false;
+    document.querySelector('input[name="deliveryOption"][value="Retirada"]').checked = false;
+    document.getElementById('locationSelect').value = '';
+    document.querySelector('input[name="paymentOption"][value="Dinheiro"]').checked = false;
+    document.querySelector('input[name="paymentOption"][value="Pix"]').checked = false;
+    document.querySelector('input[name="paymentOption"][value="Cartão"]').checked = false;
+
+    // Volta à página inicial
+    showInicio();
+
+    // Oculta a confirmação do pedido
+    document.getElementById('orderConfirmation').style.display = 'none';
 }
 
+// Função para enviar o pedido via WhatsApp
 function sendOrder() {
     const customerName = document.getElementById('nameInput').value.trim();
+    const orderNotes = document.getElementById('orderNotes').value.trim();
+
     if (cart.length === 0) {
         alert("Por favor, adicione pelo menos um produto ao carrinho.");
         return;
     }
+
+    // Monta os detalhes do pedido
     let orderDetails = cart.map(item => {
         const price = item.preco;
-        if ((item.nome === 'Ketchup' && item.quantity <= ketchupGratuito) || (item.nome === 'Maionese' && item.quantity <= maioneseGratuita)) {
-            return `*${item.nome}* - Gratuito (${item.quantity}x)`;
-        } else if (item.nome === 'Ketchup' || item.nome === 'Maionese') {
-            const extraQuantity = item.quantity - (item.nome === 'Ketchup' ? ketchupGratuito : maioneseGratuita);
-            return `*${item.nome}* - R$ ${(price * extraQuantity).toFixed(2)} (${item.quantity}x)`;
+        let itemTotal = 0;
+
+        // Verifica se o item é ketchup ou maionese
+        if (item.nome === 'Ketchup' || item.nome === 'Maionese') {
+            const quantidadeGratuita = 1; // Primeira unidade gratuita
+            const quantidadePaga = Math.max(item.quantity - quantidadeGratuita, 0); // Unidades pagas
+            itemTotal = price * quantidadePaga; // Calcula o total pago
+
+            if (item.quantity <= quantidadeGratuita) {
+                return `*${item.nome}* - Gratuito (${item.quantity}x)`;
+            } else {
+                return `*${item.nome}* - R$ ${itemTotal.toFixed(2).replace('.', ',')} (${item.quantity}x)`;
+            }
         } else {
-            return `*${item.nome}* - R$ ${(price * item.quantity).toFixed(2)} (${item.quantity}x)`;
+            // Para outros produtos, cobra normalmente
+            itemTotal = price * item.quantity;
+            if (item.desconto) {
+                itemTotal -= item.desconto; // Aplica o desconto do cupom
+                return `*${item.nome}* - R$ ${itemTotal.toFixed(2).replace('.', ',')} (${item.quantity}x) - Desconto de R$ ${item.desconto.toFixed(2).replace('.', ',')} aplicado`;
+            } else {
+                return `*${item.nome}* - R$ ${itemTotal.toFixed(2).replace('.', ',')} (${item.quantity}x)`;
+            }
         }
     }).join('\n');
 
+    // Calcula o valor total do pedido
     let totalAmount = cart.reduce((sum, item) => {
         const price = item.preco;
-        if ((item.nome === 'Ketchup' && item.quantity <= ketchupGratuito) || (item.nome === 'Maionese' && item.quantity <= maioneseGratuita)) {
-            return sum;
-        } else if (item.nome === 'Ketchup' || item.nome === 'Maionese') {
-            const extraQuantity = item.quantity - (item.nome === 'Ketchup' ? ketchupGratuito : maioneseGratuita);
-            return sum + price * extraQuantity;
-        } else {
-            return sum + price * item.quantity;
-        }
-    }, 0).toFixed(2);
+        let itemTotal = 0;
 
-    const orderNotes = document.getElementById('orderNotes').value;
+        // Verifica se o item é ketchup ou maionese
+        if (item.nome === 'Ketchup' || item.nome === 'Maionese') {
+            const quantidadeGratuita = 1; // Primeira unidade gratuita
+            const quantidadePaga = Math.max(item.quantity - quantidadeGratuita, 0); // Unidades pagas
+            itemTotal = price * quantidadePaga; // Calcula o total pago
+        } else {
+            // Para outros produtos, cobra normalmente
+            itemTotal = price * item.quantity;
+            if (item.desconto) {
+                itemTotal -= item.desconto; // Aplica o desconto do cupom
+            }
+        }
+
+        return sum + itemTotal;
+    }, 0);
+
+    // Aplica o desconto percentual do cupom, se houver
+    if (descontoCupom > 0) {
+        totalAmount *= (1 - descontoCupom / 100);
+    }
+
+    // Verifica a opção de entrega
     const deliveryOption = document.querySelector('input[name="deliveryOption"]:checked')?.value || '';
-    const paymentOption = document.querySelector('input[name="paymentOption"]:checked')?.value || '';
     const locationSelect = document.getElementById('locationSelect');
     const location = locationSelect ? locationSelect.value : '';
-    const deliveryFee = parseFloat(locationSelect.options[locationSelect.selectedIndex]?.getAttribute('data-fee')) || 0;
+    let deliveryFee = 0;
 
-    // Adicionar a taxa de maquininha ao total se o pagamento for com cartão
+    // Verifica se há taxa de entrega e se o cupom "FRETEGRATIS" foi aplicado
+    if (deliveryOption === 'Delivery' && !freteGratis) {
+        const selectedOption = locationSelect.options[locationSelect.selectedIndex];
+        deliveryFee = parseFloat(selectedOption.getAttribute('data-fee')) || 0;
+    }
+
+    // Adiciona a taxa de maquininha se o pagamento for com cartão
     if (isCardPayment) {
-        totalAmount = (parseFloat(totalAmount) + maquininhaTax).toFixed(2);
+        totalAmount += maquininhaTax;
     }
 
-    totalAmount = (parseFloat(totalAmount) + deliveryFee).toFixed(2);
+    // Adiciona a taxa de entrega ao total, exceto se o cupom for FRETEGRATIS
+    if (!freteGratis) {
+        totalAmount += deliveryFee;
+    }
 
-    let phoneNumber = '5588993467578';
-    let message = `Olá, meu nome é ${customerName}, estou enviando o meu pedido:\n\n${orderDetails}\n\nTaxa de entrega: R$ ${deliveryFee.toFixed(2)}\nTotal: R$ ${totalAmount}`;
+    // Monta a mensagem do WhatsApp
+    let message = `Olá, meu nome é ${customerName}, estou enviando o meu pedido:\n\n${orderDetails}\n\n`;
+
     if (orderNotes) {
-        message += `\n\nObservações: ${orderNotes}`;
+        message += `Observações: ${orderNotes}\n\n`; // Adiciona a observação
     }
+
+    if (deliveryOption === 'Delivery') {
+        message += `Taxa de entrega: R$ ${freteGratis ? '0,00' : deliveryFee.toFixed(2).replace('.', ',')}\n`;
+    }
+
+    if (cupomAplicado) {
+        message += `Cupom aplicado: ${cupomAplicado}\n`;
+    }
+
+    if (isCardPayment) {
+        message += `Taxa de maquininha: R$ ${maquininhaTax.toFixed(2).replace('.', ',')}\n`;
+    }
+
+    message += `Total: R$ ${totalAmount.toFixed(2).replace('.', ',')}\n\n`;
+
     if (deliveryOption) {
-        message += `\n\nOpção de entrega: ${deliveryOption}`;
+        message += `Opção de entrega: ${deliveryOption}\n`;
     }
     if (location) {
-        message += `\n\nLocalização: ${location}`;
+        message += `Localização: ${location}\n`;
     }
-    if (paymentOption) {
-        message += `\n\nForma de pagamento: ${paymentOption}`;
-    }
-    message += `\n\nObrigado(a) Aguardando a confirmação!`;
 
+    const paymentOption = document.querySelector('input[name="paymentOption"]:checked')?.value || '';
+    if (paymentOption) {
+        message += `Forma de pagamento: ${paymentOption}\n`;
+    }
+
+    message += `\nObrigado(a)! Aguardando a confirmação!`;
+
+    // Envia a mensagem via WhatsApp
+    let phoneNumber = '5588993467578'; // Substitua pelo número correto
     let whatsappLink = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappLink, '_blank');
+    window.open(whatsappLink, '_blank'); // Abre o link do WhatsApp em uma nova aba
 }
 
+// Função para exibir o botão de finalização
 function showFinalizeButton() {
     document.getElementById('finalizeOrderSection').style.display = 'block';
 }
 
+// Função para voltar ao catálogo
 function goToCatalog() {
     document.getElementById('orderConfirmation').style.display = 'none';
     document.getElementById('header').style.display = 'block';
@@ -508,3 +967,38 @@ function goToCatalog() {
     document.getElementById('catalogo').style.display = 'none';
     document.getElementById('cartIcon').style.display = 'none';
 }
+
+// Carrossel Automático
+let carrosselIndex = 0;
+const carrosselItems = document.querySelectorAll('.carrossel-item');
+
+function showCarrosselItem(index) {
+    carrosselItems.forEach((item, i) => {
+        item.style.display = i === index ? 'block' : 'none';
+    });
+}
+
+function nextCarrosselItem() {
+    carrosselIndex = (carrosselIndex + 1) % carrosselItems.length;
+    showCarrosselItem(carrosselIndex);
+}
+
+function prevCarrosselItem() {
+    carrosselIndex = (carrosselIndex - 1 + carrosselItems.length) % carrosselItems.length;
+    showCarrosselItem(carrosselIndex);
+}
+
+// Iniciar carrossel
+showCarrosselItem(carrosselIndex);
+setInterval(nextCarrosselItem, 5000); // Alterna a cada 5 segundos
+
+// Exibir produtos ao carregar a página
+window.onload = () => {
+    // Exibir a capa inicialmente
+    document.getElementById('header').style.display = 'block';
+    document.getElementById('inicio').style.display = 'none';
+    document.getElementById('categorias').style.display = 'none';
+    document.getElementById('catalogo').style.display = 'none';
+    document.getElementById('cartIcon').style.display = 'none'; // Oculta o ícone do carrinho
+    document.getElementById('mainFooter').style.display = 'none';
+};

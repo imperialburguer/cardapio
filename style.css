@@ -1,10 +1,91 @@
+/* Estilos gerais */
 body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background: #fff;
+    background: #1a1a1a;
+    color: #e7edf0;
 }
 
+/* Header (Logo e Menu de Categorias) */
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background: #333;
+}
+
+.categorias {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.categoria-button {
+    background: #f9b025;
+    border: none;
+    padding: 10px;
+    margin: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.categoria-button:hover {
+    background: #c78c1d;
+}
+
+.categoria-button i {
+    font-size: 1.5em;
+    color: #141413;
+    transition: color 0.3s ease;
+}
+
+.categoria-button:hover i {
+    color: #ffffff;
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    border-radius: 5px;
+}
+
+.dropdown-content button {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    background: white;
+    border: none;
+    width: 100%;
+    text-align: left;
+    font-size: 0.9em;
+}
+
+.dropdown-content button:hover {
+    background-color: #f1f1f1;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+/* Capa */
 .header {
     background-color: black;
     color: white;
@@ -31,72 +112,93 @@ body {
 
 .informacoes {
     margin-top: 20px;
-    font-family: Arial, sans-serif;
-    color: #e7edf0;
-}
-
-button {
-    background: #fda102;
-    color: rgb(80, 17, 17);
-    border: none;
-    padding: 10px;
-    cursor: pointer;
-}
-
-button:hover {
-    background: #cc9227;
-}
-
-button:focus {
-    outline: 2px solid #fda102;
 }
 
 .catalog-button {
     background: #f9b025;
+    color: rgb(80, 17, 17);
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 1em;
+    margin-top: 20px;
+    border-radius: 5px;
 }
 
 .catalog-button:hover {
     background: #c78c1d;
 }
 
-.categorias {
-    text-align: center;
-    padding: 10px;
-    background: #ccc;
-    overflow: auto;
+/* Carrossel */
+.carrossel {
+    width: 100%;
+    height: 0;
+    padding-top: 400px; /* Proporção de 1200x500 */
+    position: relative;
+    overflow: hidden;
+    margin-top: 10px;
+    margin-bottom: 20px;
 }
 
-.categoria-button {
-    background: #f9b025;
-    color: rgb(80, 17, 17);
+.carrossel-item {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.carrossel-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.carrossel-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
     border: none;
-    padding: 10px 20px;
-    margin: 5px;
+    padding: 10px;
     cursor: pointer;
+    font-size: 18px;
 }
 
-.categoria-button:hover {
-    background: #c78c1d;
+.carrossel-button.prev {
+    left: 10px;
 }
 
-.catalogo {
-    padding: 20px;
-    margin-bottom: 80px;
-    background-color: #f0f0f0;
-    overflow: auto;
+.carrossel-button.next {
+    right: 10px;
+}
+
+/* Produtos em Destaque */
+.destaque {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.destaque h1 {
+    font-size: 1.5em;
+    color: #f9b025;
 }
 
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 10px;
+    padding: 20px;
 }
 
 .produto {
-    border: 2px solid #ccc; /* Aumentar a borda */
+    border: 2px solid #444;
     padding: 10px;
     text-align: center;
-    background: #fff;
+    background: #333;
     margin-bottom: 20px;
 }
 
@@ -111,13 +213,33 @@ button:focus {
 .produto h3 {
     margin-top: 10px;
     font-size: 1em;
+    color: #f9b025;
 }
 
 .produto p {
     margin-top: 10px;
     font-size: 0.9em;
+    color: #e7edf0;
 }
 
+/* Botão "Adicionar ao Carrinho" */
+.produto button {
+    background: #f9b025;
+    color: rgb(80, 17, 17);
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 0.9em;
+    border-radius: 5px;
+    margin-top: 10px;
+    transition: background 0.3s ease;
+}
+
+.produto button:hover {
+    background: #c78c1d;
+}
+
+/* Carrinho de Compras */
 .cart-icon {
     position: fixed;
     top: 15px;
@@ -153,6 +275,118 @@ button:focus {
     max-height: 400px;
     font-size: 14px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    color: #333;
+}
+
+/* Botões dentro do carrinho */
+.cart-details button {
+    background: #f9b025;
+    color: rgb(80, 17, 17);
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 0.9em;
+    border-radius: 5px;
+    margin-top: 10px;
+    transition: background 0.3s ease;
+}
+
+.cart-details button:hover {
+    background: #c78c1d;
+}
+
+/* Estilo para o texto "Possui um cupom de desconto?" */
+.cupom-option {
+    margin-top: 10px;
+}
+
+.cupom-toggle-button {
+    background: none;
+    color: #007bff;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 1em;
+    text-decoration: none;
+}
+
+.cupom-toggle-button .arrow {
+    margin-left: 5px;
+    font-size: 0.8em;
+}
+
+/* Estilo para o campo de cupom e botões */
+#cupomInputContainer {
+    display: none;
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+#cupomAplicadoContainer {
+    display: none;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#cupomInputContainer input {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    width: 150px;
+    background: #f9f9f9;
+    color: #333;
+}
+
+#cupomInputContainer button, #cupomAplicadoContainer button {
+    background: #f9b025;
+    color: rgb(80, 17, 17);
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.9em;
+    border-radius: 5px;
+    transition: background 0.3s ease;
+}
+
+#cupomInputContainer button:hover, #cupomAplicadoContainer button:hover {
+    background: #c78c1d;
+}
+
+/* Campo de input para o nome e botão Ok */
+.customer-name {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.customer-name input {
+    width: 150px; /* Ajusta a largura do input */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    background: #f9f9f9;
+    color: #333;
+}
+
+.customer-name button {
+    background: #f9b025;
+    color: rgb(80, 17, 17);
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 0.9em;
+    border-radius: 5px;
+    transition: background 0.3s ease;
+}
+
+.customer-name button:hover {
+    background: #c78c1d;
 }
 
 textarea#orderNotes {
@@ -164,48 +398,19 @@ textarea#orderNotes {
     border: 1px solid #ccc;
     border-radius: 5px;
     resize: none;
+    background: #f9f9f9;
+    color: #333;
 }
 
-.delivery-option, .location-option, .payment-option, .customer-name {
+.delivery-option, .location-option, .payment-option, .customer-name, .cupom-option {
     margin-top: 10px;
 }
 
-.delivery-option p, .location-option p, .payment-option p, .customer-name p {
+.delivery-option p, .location-option p, .payment-option p, .customer-name p, .cupom-option p {
     margin: 0;
     font-weight: bold;
     margin-bottom: 10px;
-}
-
-.customer-name {
-    margin-top: 10px;
-    margin-bottom: 10px;
-}
-
-.customer-name input {
-    margin-top: 10px;
-    padding: 10px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-.customer-name button, .order-confirmation button {
-    font-size: 12px; /* Controla o tamanho da fonte do texto do botão */
-    padding: 12px 20px; /* Controla a altura (padding vertical) e largura (padding horizontal) do botão */
-    background-color: #f9b025;
-    color: rgb(80, 17, 17);
-    border: none;
-    cursor: pointer;
-    border-radius: 5px;
-    margin-top: 10px; /* Controla a margem superior do botão */
-}
-
-.customer-name button:hover, .order-confirmation button:hover {
-    background-color: #c78c1d;
-}
-
-.delivery-option label, .payment-option label {
-    margin-right: 10px;
+    color: #333;
 }
 
 #locationOption select {
@@ -215,10 +420,12 @@ textarea#orderNotes {
     border: 1px solid #ccc;
     border-radius: 5px;
     font-size: 14px;
+    background: #f9f9f9;
+    color: #333;
 }
 
 #finalizeOrderSection {
-    margin-top: 10px; /* Ajustar a margem superior do botão */
+    margin-top: 10px;
 }
 
 .cart-item {
@@ -230,6 +437,7 @@ textarea#orderNotes {
 
 .cart-item p {
     flex: 1;
+    color: #333;
 }
 
 .adjust-buttons {
@@ -252,11 +460,12 @@ textarea#orderNotes {
     margin-left: 10px;
 }
 
+/* Rodapé */
 .footer {
-    background: #f8f8f8;
+    background: #222;
     padding: 10px 0;
     text-align: center;
-    border-top: 1px solid #e7e7e7;
+    border-top: 1px solid #444;
     position: fixed;
     bottom: 0;
     left: 0;
@@ -274,6 +483,7 @@ textarea#orderNotes {
 .footer .social-media p {
     margin: 0 10px 0 0;
     font-weight: bold;
+    color: #f9b025;
 }
 
 .footer .social-media a {
@@ -281,7 +491,7 @@ textarea#orderNotes {
 }
 
 .footer .social-media i {
-    font-size: 25px; /* Tamanho original dos ícones no rodapé */
+    font-size: 25px;
 }
 
 .instagram-icon {
@@ -349,7 +559,7 @@ textarea#orderNotes {
 .order-confirmation {
     text-align: center;
     padding: 30px 20px;
-    background: #f0f0f0;
+    background: #222;
     position: fixed;
     top: 50%;
     left: 50%;
@@ -363,11 +573,13 @@ textarea#orderNotes {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    color: #e7edf0;
 }
 
 .order-confirmation h1 {
     font-size: 2em;
     margin-bottom: 20px;
+    color: #f9b025;
 }
 
 .order-confirmation p {
@@ -387,7 +599,7 @@ textarea#orderNotes {
     display: inline-block;
     margin: 0 10px;
     text-decoration: none;
-    color: #333;
+    color: #f9b025;
     font-size: 2em;
 }
 
@@ -408,7 +620,7 @@ textarea#orderNotes {
 
 .credit {
     font-size: 10px;
-    color: #555;
+    color: #e9e2e2;
     text-align: center;
     position: fixed;
     bottom: 20px;
@@ -416,10 +628,24 @@ textarea#orderNotes {
     right: 0;
     margin: 0;
     padding: 5px 0;
-    background: #f0f0f0;
+    background: #222;
 }
 
+/* Responsividade */
 @media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .logo {
+        margin-bottom: 10px;
+    }
+
+    .categorias {
+        justify-content: flex-start;
+    }
+
     .order-confirmation {
         width: 100%;
         padding: 20px;
@@ -432,4 +658,31 @@ textarea#orderNotes {
     .credit {
         font-size: 8px;
     }
+
+    .carrossel {
+        padding-top: 50%;
+    }
+}
+
+/* Estilo do botão de status */
+.status-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1em;
+    color: inherit; /* Herda a cor do texto */
+}
+
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-text {
+    font-weight: bold;
 }

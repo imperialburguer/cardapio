@@ -372,6 +372,7 @@ function aplicarCupom() {
     const cupom = cuponsValidos[cupomInput];
     const dataAtual = new Date();
 
+    // Verifica se o cupom existe
     if (!cupom) {
         alert("Cupom inválido!");
         return;
@@ -390,20 +391,16 @@ function aplicarCupom() {
         return;
     }
 
-    // Verifica o tipo de cupom
-    if (cupom.tipo === "desconto-total") {
-        const valorMinimo = cupom.regra.valor;
-        const totalCompra = calcularTotal();
+    // Valida as regras do cupom
+    if (!validarCupom(cupom)) {
+        return; // Se o cupom não for válido, interrompe a aplicação
+    }
 
-        if (totalCompra < valorMinimo) {
-            alert(`Cupom válido apenas para compras acima de R$ ${valorMinimo.toFixed(2)}.`);
-            return;
-        }
-
-        // Aplica o desconto no valor total da compra
-        descontoCupom = cupom.valor; // Armazena o desconto do cupom
+    // Aplica o cupom com base no tipo
+    if (cupom.tipo === "frete-gratis") {
+        freteGratis = true; // Ativa o frete grátis
         cupomAplicado = cupomInput; // Armazena o cupom aplicado
-        alert(`Cupom aplicado com sucesso! Desconto de ${cupom.valor}% no valor total da compra.`);
+        alert("Cupom aplicado com sucesso! Frete grátis ativado.");
     } else if (cupom.tipo === "desconto") {
         const produtosValidos = cupom.regra.produtos;
         const itemParticipante = cart.find(item => produtosValidos.includes(item.id));
@@ -418,40 +415,94 @@ function aplicarCupom() {
         itemParticipante.desconto = desconto; // Armazena o desconto no item
         cupomAplicado = cupomInput; // Armazena o cupom aplicado
         alert(`Cupom aplicado com sucesso! Desconto de ${cupom.valor}% no item "${itemParticipante.nome}".`);
-    } else if (cupom.tipo === "frete-gratis") {
-        freteGratis = true; // Ativa o frete grátis
+    } else if (cupom.tipo === "desconto-total") {
+        descontoCupom = cupom.valor; // Armazena o desconto do cupom
         cupomAplicado = cupomInput; // Armazena o cupom aplicado
-        alert("Cupom aplicado com sucesso! Frete grátis ativado.");
+        alert(`Cupom aplicado com sucesso! Desconto de ${cupom.valor}% no valor total da compra.`);
     }
+
+    // Atualiza o número de usos do cupom
+    cuponsValidos[cupomInput].usos += 1;
 
     // Atualiza a exibição do cupom aplicado
     document.getElementById('toggleCupomButton').style.display = 'none';
     document.getElementById('cupomAplicadoContainer').style.display = 'flex';
     document.getElementById('cupomAplicadoText').textContent = cupomInput;
 
-    // Atualiza o número de usos do cupom
-    cuponsValidos[cupomInput].usos += 1;
-
     // Atualiza o carrinho
     updateCart();
 }
 
-// Função para remover o cupom
+//Função para remover o cupom
 function removerCupom() {
-    // Remove o desconto do item específico
+    // Remove o desconto do item específico (se houver)
     cart.forEach(item => {
         if (item.desconto) {
-            delete item.desconto;
+            delete item.desconto; // Remove o desconto do item
         }
     });
 
-    descontoCupom = 0;
-    freteGratis = false;
-    cupomAplicado = null;
+    // Reseta as variáveis de cupom
+    descontoCupom = 0; // Remove o desconto percentual
+    freteGratis = false; // Desativa o frete grátis
+    cupomAplicado = null; // Remove o cupom aplicado
+
+    // Limpa o campo de cupom
     document.getElementById('cupomInput').value = '';
+
+    // Atualiza a exibição do cupom aplicado
     document.getElementById('cupomAplicadoContainer').style.display = 'none';
     document.getElementById('toggleCupomButton').style.display = 'block';
+
+    // Atualiza o carrinho para refletir as mudanças
     updateCart();
+}
+
+function validarCupom(cupom) {
+    const totalCompra = calcularTotal();
+
+    // Verifica o tipo de cupom e suas regras
+    if (cupom.tipo === "frete-gratis") {
+        // Verifica o valor mínimo
+        if (totalCompra < cupom.regra.valor) {
+            alert(`Cupom válido apenas para compras acima de R$ ${cupom.regra.valor.toFixed(2)}.`);
+            return false;
+        }
+
+        // Verifica se todos os produtos no carrinho estão na lista de produtos permitidos
+        const produtosNoCarrinho = cart.map(item => item.id);
+        const produtosPermitidos = cupom.regra.produtos;
+
+        const todosProdutosValidos = produtosNoCarrinho.every(id => produtosPermitidos.includes(id));
+
+        if (!todosProdutosValidos) {
+            alert("Cupom não válido para os produtos no carrinho. Verifique os termos do cupom.");
+            return false;
+        }
+    } else if (cupom.tipo === "desconto") {
+        // Verifica o valor mínimo e os produtos permitidos
+        if (totalCompra < cupom.regra.valor) {
+            alert(`Cupom válido apenas para compras acima de R$ ${cupom.regra.valor.toFixed(2)}.`);
+            return false;
+        }
+
+        const produtosNoCarrinho = cart.map(item => item.id);
+        const produtosPermitidos = cupom.regra.produtos;
+        const produtosValidos = produtosNoCarrinho.some(id => produtosPermitidos.includes(id));
+
+        if (!produtosValidos) {
+            alert("Cupom não válido para os produtos no carrinho. Verifique os termos do cupom.");
+            return false;
+        }
+    } else if (cupom.tipo === "desconto-total") {
+        // Verifica o valor mínimo
+        if (totalCompra < cupom.regra.valor) {
+            alert(`Cupom válido apenas para compras acima de R$ ${cupom.regra.valor.toFixed(2)}.`);
+            return false;
+        }
+    }
+
+    return true; // Cupom válido
 }
 
 // Função para calcular o total do carrinho
